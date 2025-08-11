@@ -1,187 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cap Rate / NOI / Price Calculator</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cap Rate ⇄ NOI ⇄ Sales Price — Calculator</title>
 <style>
-    :root {
-        --bg-color: #f5f6fa;
-        --text-color: #2f3640;
-        --card-bg: #ffffff;
-        --input-bg: #fff;
-        --border-color: #ccc;
-    }
-    body.dark {
-        --bg-color: #1e272e;
-        --text-color: #f5f6fa;
-        --card-bg: #2f3640;
-        --input-bg: #3d3d3d;
-        --border-color: #555;
-    }
-    body {
-        font-family: Arial, sans-serif;
-        background: var(--bg-color);
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-        transition: background 0.3s, color 0.3s;
-    }
-    .calculator {
-        background: var(--card-bg);
-        padding: 25px;
-        border-radius: 15px;
-        max-width: 400px;
-        width: 100%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transition: background 0.3s;
-    }
-    h1 {
-        font-size: 1.4rem;
-        text-align: center;
-        margin-bottom: 20px;
-        color: var(--text-color);
-        transition: color 0.3s;
-    }
-    label {
-        display: block;
-        margin-top: 15px;
-        font-weight: bold;
-        color: var(--text-color);
-        transition: color 0.3s;
-    }
-    input {
-        width: 100%;
-        padding: 10px;
-        margin-top: 5px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 1rem;
-        background: var(--input-bg);
-        color: var(--text-color);
-        transition: background 0.3s, color 0.3s, border-color 0.3s;
-    }
-    .theme-toggle {
-        display: block;
-        margin: 0 auto 15px;
-        background: none;
-        border: 2px solid var(--text-color);
-        color: var(--text-color);
-        padding: 8px 15px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    .theme-toggle:hover {
-        background: var(--text-color);
-        color: var(--bg-color);
-    }
+  :root{
+    --bg:#f5f6fa; --card:#fff; --text:#222; --muted:#666; --accent:#2f80ed; --err:#c62828;
+  }
+  body.dark{ --bg:#0f1720; --card:#111827; --text:#e6eef6; --muted:#aab6c7; --accent:#60a5fa; --err:#ff6b6b; }
+  body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:20px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
+  .card{background:var(--card);border-radius:12px;padding:20px;max-width:520px;width:100%;box-shadow:0 6px 18px rgba(0,0,0,0.08);}
+  h1{margin:0 0 12px;font-size:1.25rem;}
+  p.help{margin:0 0 18px;color:var(--muted);font-size:0.92rem;}
+  .row{display:flex;gap:10px;align-items:center;margin-top:12px;}
+  label{flex:1;font-weight:600;font-size:0.95rem;}
+  .input-wrap{flex:1;display:flex;gap:8px;align-items:center;}
+  input[type="text"]{flex:1;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem;background:transparent;color:var(--text);}
+  button.calc{padding:9px 12px;border-radius:8px;border:none;background:var(--accent);color:white;font-weight:600;cursor:pointer;}
+  button.calc:active{transform:translateY(1px);}
+  button.clear{background:#e2e8f0;color:var(--text);border-radius:8px;padding:9px 10px;cursor:pointer;border:none;}
+  .controls{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:14px;}
+  .msg{margin-top:12px;color:var(--err);font-weight:600;}
+  .theme-toggle{background:none;border:1px solid transparent;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;}
+  @media (max-width:520px){ .row{flex-direction:column;align-items:stretch;} .controls{flex-direction:column;align-items:stretch;} .input-wrap{flex-direction:column;} }
 </style>
 </head>
 <body>
 
-<div class="calculator">
-    <button class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
-    <h1>Cap Rate ↔ NOI ↔ Price</h1>
-    <label>Cap Rate (%): 
-        <input type="text" id="capRate" placeholder="e.g. 6.5">
-    </label>
-    <label>NOI ($): 
-        <input type="text" id="noi" placeholder="e.g. 50000">
-    </label>
-    <label>Sales Price ($): 
-        <input type="text" id="price" placeholder="e.g. 769230.77">
-    </label>
+<div class="card" role="main">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h1>Cap Rate ⇄ NOI ⇄ Sales Price</h1>
+    <button id="themeToggle" class="theme-toggle" aria-pressed="false">🌙 Dark</button>
+  </div>
+
+  <p class="help">Enter values into the two known fields, then click the <strong>Calculate</strong> button next to the field you want computed.</p>
+
+  <!-- Cap Rate -->
+  <div class="row">
+    <label for="capRate">Cap Rate (%)</label>
+    <div class="input-wrap">
+      <input id="capRate" type="text" inputmode="decimal" placeholder="e.g. 6.50" aria-label="Cap Rate percent" />
+      <button id="calcCap" class="calc" type="button" aria-label="Calculate Cap Rate">Calculate</button>
+      <button id="clearCap" class="clear" type="button" aria-label="Clear cap rate">Clear</button>
+    </div>
+  </div>
+
+  <!-- NOI -->
+  <div class="row">
+    <label for="noi">NOI ($)</label>
+    <div class="input-wrap">
+      <input id="noi" type="text" inputmode="decimal" placeholder="e.g. 50,000" aria-label="Net Operating Income" />
+      <button id="calcNOI" class="calc" type="button" aria-label="Calculate NOI">Calculate</button>
+      <button id="clearNOI" class="clear" type="button" aria-label="Clear NOI">Clear</button>
+    </div>
+  </div>
+
+  <!-- Price -->
+  <div class="row">
+    <label for="price">Sales Price ($)</label>
+    <div class="input-wrap">
+      <input id="price" type="text" inputmode="decimal" placeholder="e.g. 750,000" aria-label="Sales Price" />
+      <button id="calcPrice" class="calc" type="button" aria-label="Calculate Sales Price">Calculate</button>
+      <button id="clearPrice" class="clear" type="button" aria-label="Clear Price">Clear</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="resetAll" class="clear" type="button">Reset All</button>
+  </div>
+
+  <div id="message" class="msg" role="status" aria-live="polite" style="display:none"></div>
 </div>
 
 <script>
-    const capRateInput = document.getElementById('capRate');
-    const noiInput = document.getElementById('noi');
-    const priceInput = document.getElementById('price');
-    const themeToggle = document.getElementById('themeToggle');
+  // Elements
+  const capRateInput = document.getElementById('capRate');
+  const noiInput = document.getElementById('noi');
+  const priceInput = document.getElementById('price');
+  const calcCapBtn = document.getElementById('calcCap');
+  const calcNOIBtn = document.getElementById('calcNOI');
+  const calcPriceBtn = document.getElementById('calcPrice');
+  const msg = document.getElementById('message');
+  const resetAll = document.getElementById('resetAll');
+  const themeToggle = document.getElementById('themeToggle');
 
-    let updating = false;
+  // Helpers
+  function showMessage(text){
+    msg.style.display = 'block';
+    msg.textContent = text;
+  }
+  function clearMessage(){
+    msg.style.display = 'none';
+    msg.textContent = '';
+  }
 
-    // Theme toggle logic
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark');
-        themeToggle.textContent = document.body.classList.contains('dark') 
-            ? "☀️ Light Mode" 
-            : "🌙 Dark Mode";
+  function parseCurrency(v){
+    if (v === null || v === undefined) return NaN;
+    const s = v.toString().trim();
+    if (s === '') return NaN;
+    const n = parseFloat(s.replace(/[^0-9.-]/g,''));
+    return isFinite(n) ? n : NaN;
+  }
+
+  function formatCurrency(n){
+    if (!isFinite(n)) return '';
+    // keep two decimals
+    return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2, minimumFractionDigits: 2 });
+  }
+
+  function parsePercent(v){
+    if (v === null || v === undefined) return NaN;
+    const s = v.toString().trim();
+    if (s === '') return NaN;
+    const n = parseFloat(s.replace(/[^0-9.-]/g,''));
+    return isFinite(n) ? n : NaN; // returns percent value (e.g. 6.5)
+  }
+
+  function formatPercent(p){
+    if (!isFinite(p)) return '';
+    return Number(p).toFixed(2); // show percent like "6.50"
+  }
+
+  // Calculation functions (each triggered by its button)
+  function calculateCapRate(){
+    clearMessage();
+    const noi = parseCurrency(noiInput.value);
+    const price = parseCurrency(priceInput.value);
+
+    if (isNaN(noi) || isNaN(price)) {
+      showMessage('Enter numeric NOI and Sales Price to calculate Cap Rate.');
+      return;
+    }
+    if (price === 0) {
+      showMessage('Sales Price cannot be zero.');
+      return;
+    }
+    const capPercent = (noi / price) * 100;
+    capRateInput.value = formatPercent(capPercent);
+    // optionally format NOI / Price if they were typed raw
+    if (!isNaN(noi)) noiInput.value = formatCurrency(noi);
+    if (!isNaN(price)) priceInput.value = formatCurrency(price);
+  }
+
+  function calculateNOI(){
+    clearMessage();
+    const capPercent = parsePercent(capRateInput.value); // percent units, e.g. 6.5
+    const price = parseCurrency(priceInput.value);
+
+    if (isNaN(capPercent) || isNaN(price)) {
+      showMessage('Enter numeric Cap Rate and Sales Price to calculate NOI.');
+      return;
+    }
+    const noi = (capPercent / 100) * price;
+    noiInput.value = formatCurrency(noi);
+    if (!isNaN(price)) priceInput.value = formatCurrency(price);
+    if (!isNaN(capPercent)) capRateInput.value = formatPercent(capPercent);
+  }
+
+  function calculatePrice(){
+    clearMessage();
+    const noi = parseCurrency(noiInput.value);
+    const capPercent = parsePercent(capRateInput.value);
+
+    if (isNaN(noi) || isNaN(capPercent)) {
+      showMessage('Enter numeric NOI and Cap Rate to calculate Sales Price.');
+      return;
+    }
+    if (capPercent === 0) {
+      showMessage('Cap Rate cannot be zero.');
+      return;
+    }
+    const price = noi / (capPercent / 100);
+    priceInput.value = formatCurrency(price);
+    if (!isNaN(noi)) noiInput.value = formatCurrency(noi);
+    if (!isNaN(capPercent)) capRateInput.value = formatPercent(capPercent);
+  }
+
+  // Bind buttons
+  calcCapBtn.addEventListener('click', calculateCapRate);
+  calcNOIBtn.addEventListener('click', calculateNOI);
+  calcPriceBtn.addEventListener('click', calculatePrice);
+
+  // Clear buttons for each field
+  document.getElementById('clearCap').addEventListener('click', () => { capRateInput.value=''; clearMessage(); capRateInput.focus(); });
+  document.getElementById('clearNOI').addEventListener('click', () => { noiInput.value=''; clearMessage(); noiInput.focus(); });
+  document.getElementById('clearPrice').addEventListener('click', () => { priceInput.value=''; clearMessage(); priceInput.focus(); });
+
+  // Reset all
+  resetAll.addEventListener('click', () => {
+    capRateInput.value=''; noiInput.value=''; priceInput.value=''; clearMessage();
+  });
+
+  // Format fields on blur (user-friendly display)
+  noiInput.addEventListener('blur', () => {
+    const n = parseCurrency(noiInput.value);
+    if (!isNaN(n)) noiInput.value = formatCurrency(n);
+  });
+  priceInput.addEventListener('blur', () => {
+    const n = parseCurrency(priceInput.value);
+    if (!isNaN(n)) priceInput.value = formatCurrency(n);
+  });
+  capRateInput.addEventListener('blur', () => {
+    const p = parsePercent(capRateInput.value);
+    if (!isNaN(p)) capRateInput.value = formatPercent(p);
+  });
+
+  // Optional: allow Enter key to trigger the calculate button next to focused input
+  [capRateInput, noiInput, priceInput].forEach((el) => {
+    el.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        // decide which calculation to run based on focused field:
+        if (el === capRateInput) calculateCapRate();
+        else if (el === noiInput) calculateNOI();
+        else if (el === priceInput) calculatePrice();
+      }
     });
+  });
 
-    function parseCurrency(value) {
-        return parseFloat(value.replace(/[^0-9.-]/g, ""));
-    }
-
-    function formatCurrency(value) {
-        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-    }
-
-    function formatPercent(value) {
-        return value.toFixed(2);
-    }
-
-    function updateFromCapRateAndPrice() {
-        const capRate = parseFloat(capRateInput.value) / 100;
-        const price = parseCurrency(priceInput.value);
-        if (!isNaN(capRate) && !isNaN(price)) {
-            noiInput.value = formatCurrency(capRate * price);
-        }
-    }
-
-    function updateFromNOIAndPrice() {
-        const noi = parseCurrency(noiInput.value);
-        const price = parseCurrency(priceInput.value);
-        if (!isNaN(noi) && !isNaN(price) && price !== 0) {
-            capRateInput.value = formatPercent((noi / price) * 100);
-        }
-    }
-
-    function updateFromNOIAndCapRate() {
-        const noi = parseCurrency(noiInput.value);
-        const capRate = parseFloat(capRateInput.value) / 100;
-        if (!isNaN(noi) && !isNaN(capRate) && capRate !== 0) {
-            priceInput.value = formatCurrency(noi / capRate);
-        }
-    }
-
-    function handleInputChange(e) {
-        if (updating) return;
-        updating = true;
-
-        if (e.target.id === "capRate") {
-            if (priceInput.value) updateFromCapRateAndPrice();
-            else if (noiInput.value) updateFromNOIAndCapRate();
-        } 
-        else if (e.target.id === "noi") {
-            if (priceInput.value) updateFromNOIAndPrice();
-            else if (capRateInput.value) updateFromNOIAndCapRate();
-        } 
-        else if (e.target.id === "price") {
-            if (capRateInput.value) updateFromCapRateAndPrice();
-            else if (noiInput.value) updateFromNOIAndPrice();
-        }
-
-        updating = false;
-    }
-
-    capRateInput.addEventListener('input', handleInputChange);
-    noiInput.addEventListener('input', handleInputChange);
-    priceInput.addEventListener('input', handleInputChange);
-
-    noiInput.addEventListener('blur', () => {
-        const val = parseCurrency(noiInput.value);
-        if (!isNaN(val)) noiInput.value = formatCurrency(val);
-    });
-
-    priceInput.addEventListener('blur', () => {
-        const val = parseCurrency(priceInput.value);
-        if (!isNaN(val)) priceInput.value = formatCurrency(val);
-    });
+  // Theme toggle
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    themeToggle.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+    themeToggle.setAttribute('aria-pressed', String(isDark));
+  });
 </script>
-
 </body>
 </html>
